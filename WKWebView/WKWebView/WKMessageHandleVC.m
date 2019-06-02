@@ -44,19 +44,72 @@
     }];
 }
 
+//self - webView - configuration - userContentController - self
+- (void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    [self.webView.configuration.userContentController addScriptMessageHandler:self name:@"messgaeOC"];
+}
+
+- (void)viewWillDisappear:(BOOL)animated{
+    [super viewWillDisappear:animated];
+    [self.webView.configuration.userContentController removeScriptMessageHandlerForName:@"messgaeOC"];
+}
+
 
 #pragma mark - didClickRightAction
 
 - (void)didClickRightAction{
     
-    NSLog(@"didClickRightAction");
-    
-    NSString *jsStr2 = @"showAlert('messageHandle:OC-->JS')";
-    [self.webView evaluateJavaScript:jsStr2 completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+    NSDictionary * dic = @{
+                           @"username":@"你好",
+                           @"psw":@"123456"
+                           };
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:&error];
+    NSString *jsonString;
+    if (error) {
+        NSLog(@"%@",error);
+    }else{
+        jsonString = [[NSString alloc]initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+    NSString *jsStr = [NSString stringWithFormat:@"showAlert('%@')",[self deleteSpacesAndLinefeed:jsonString]];
+    [self.webView evaluateJavaScript:jsStr completionHandler:^(id _Nullable result, NSError * _Nullable error) {
         NSLog(@"%@----%@",result, error);
     }];
     
 }
+
+-(NSString *)convertToJsonData:(NSDictionary *)dict {
+    
+    NSError *error;
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dict options:NSJSONWritingPrettyPrinted error:&error];
+    NSString *jsonString;
+    if (error) {
+        NSLog(@"%@",error);
+    }else{
+        jsonString = [[NSString alloc]initWithData:jsonData encoding:NSUTF8StringEncoding];
+    }
+    return jsonString;
+}
+
+/**
+ 删除字符串中的空格和换行符
+ 
+ @param str 目标字符串
+ */
+- (NSString*)deleteSpacesAndLinefeed:(NSString*)str {
+    NSMutableString *mutStr = [NSMutableString stringWithString:str];
+    NSRange range = {0,str.length};
+    
+        //去掉字符串中的空格
+    [mutStr replaceOccurrencesOfString:@" " withString:@"" options:NSLiteralSearch range:range];
+    NSRange range2 = {0,mutStr.length};
+    
+        //去掉字符串中的换行符
+    [mutStr replaceOccurrencesOfString:@"\n" withString:@"" options:NSLiteralSearch range:range2];
+    return mutStr;
+}
+
 
 #pragma mark - WKScriptMessageHandler
 

@@ -40,18 +40,37 @@
 #pragma mark - WKNavigationDelegate
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
+    NSURL *URL = navigationAction.request.URL;
+    NSString *scheme = [URL scheme];
+    if ([scheme isEqualToString:@"chinaEdu"]) {
+        NSString *host = [URL host];
+        if ([host isEqualToString:@"jsCallOC"]) {
+            NSMutableDictionary *temDict = [self decoderUrl:URL];
+            NSString *username = [temDict objectForKey:@"username"];
+            NSString *password = [temDict objectForKey:@"password"];
+            NSLog(@"%@---%@",username,password);
+        }else{
+            NSLog(@"不明地址 %@",host);
+        }
+        decisionHandler(WKNavigationActionPolicyCancel);
+        return;
+    }
     decisionHandler(WKNavigationActionPolicyAllow);
 }
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation{
     self.title = webView.title;
+    NSString *jsStr2 = @"var arr = [3, 'Cooci', 'abc']; ";
+    [self.webView evaluateJavaScript:jsStr2 completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+        NSLog(@"%@----%@",result, error);
+    }];
+    
 }
 
 
 #pragma mark - WKUIDelegate
 - (void)webView:(WKWebView *)webView runJavaScriptAlertPanelWithMessage:(NSString *)message initiatedByFrame:(WKFrameInfo *)frame completionHandler:(void (^)(void))completionHandler
 {
-    
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"提醒" message:message preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"知道了" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         completionHandler();
@@ -92,6 +111,10 @@
     
     return wkUController;
 }
+
+
+
+
 
 //#pragma mark - WKNavigationDelegate
 ////请求之前，决定是否要跳转:用户点击网页上的链接，需要打开新页面时，将先调用这个方法。
